@@ -13,7 +13,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-temp-key-for-dev')
 
 # DEBUG (set to False in Render)
 # DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-
+DEBUG = True
+if DEBUG:
+    import mimetypes
+    mimetypes.add_type("application/javascript", ".js", True)
 
 
 # Allowed Hosts
