@@ -8,7 +8,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-temp-key-for-dev')
 
 # DEBUG toggle via environment variable
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 DEBUG = True
 
 # Hosts setup for Render
