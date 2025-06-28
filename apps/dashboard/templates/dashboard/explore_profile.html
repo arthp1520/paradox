@@ -1,0 +1,85 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Explore{% endblock %}
+
+{% block body %}
+<style>
+  body {
+    background: linear-gradient(to right, #f3f0ff, #ede7f6);
+  }
+
+  .section-title {
+    color: #6a1b9a;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .user-card,
+  .doc-card {
+    border-radius: 1rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    transition: transform 0.2s ease;
+  }
+
+  .user-card:hover,
+  .doc-card:hover {
+    transform: scale(1.02);
+  }
+
+  .user-btn {
+    color: #6a1b9a;
+    border-color: #6a1b9a;
+  }
+
+  .user-btn:hover {
+    background-color: #6a1b9a;
+    color: white;
+  }
+
+  .text-purple {
+    color: #6a1b9a;
+  }
+
+  .comment-box {
+    background: #f9f9fb;
+    border-radius: 6px;
+    padding: 5px 10px;
+    margin-bottom: 5px;
+  }
+
+  .comment-box strong {
+    color: #4a148c;
+  }
+</style>
+
+<div class="container mt-5 mb-5">
+
+  <!-- Explore Users -->
+  <h2 class="mb-4 section-title">✨ Explore Users</h2>
+  <div class="row">
+    {% for user in users %}
+    <div class="col-md-3 mb-4">
+      <div class="card text-center user-card border-0">
+        <div class="card-body">
+          {% if user.profile_image and user.profile_image.name %}
+          <img src="{{ user.profile_image.url }}" class="rounded-circle mb-2" width="80" height="80" style="object-fit: cover;">
+          {% else %}
+          <img src="{% static 'dashboard/images/default-profile-icon.jpg' %}" class="rounded-circle mb-2" width="80" height="80" style="object-fit: cover;">
+          {% endif %}
+          <h6 class="fw-bold mb-1 text-purple">@{{ user.name }}</h6>
+          <p class="text-muted small">{{ user.bio|default:"No bio yet." }}</p>
+          <a href="{% url 'public_profile' user.id %}" class="btn btn-sm user-btn rounded-pill mt-2">View Profile</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <hr class="my-5">
+
+  <!-- Explore Documents -->
+ 
+
+</div>
+{% endblock %}

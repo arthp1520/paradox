@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms & Conditions | Paradox</title>
+
+  <!-- Bootstrap & Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <style>
+    body {
+      background-color: #f4f0fa;
+      color: #3d1c63;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .navbar {
+      background-color: #5f259f;
+    }
+
+    .navbar-brand {
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: white !important;
+    }
+
+    .card {
+      background-color: #fff;
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: 0 0 15px rgba(95, 37, 159, 0.2);
+    }
+
+    h2 {
+      color: #5f259f;
+    }
+
+    .footer {
+      background-color: #5f259f;
+      color: white;
+      padding: 1rem 0;
+    }
+
+    .footer a {
+      color: #d8b3ff;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'sign_up' %}">Paradox</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container my-5">
+    <div class="card">
+      <h2 class="mb-4">Terms & Conditions</h2>
+
+      <p>Welcome to Paradox. By accessing or using our platform, you agree to be bound by the following terms and conditions. Please read them carefully.</p>
+
+      <h5>1. Acceptance of Terms</h5>
+      <p>By using Paradox, you agree to comply with and be legally bound by these terms and our privacy policy. If you do not agree, please do not use the platform.</p>
+
+      <h5>2. User Content</h5>
+      <p>Users are solely responsible for the content (PDFs, notes, documents) they upload. You must not upload copyrighted, offensive, or illegal material.</p>
+
+      <h5>3. Intellectual Property</h5>
+      <p>All intellectual property related to the Paradox platform, including branding, design, and content, is owned or licensed by us and may not be copied or used without permission.</p>
+
+      <h5>4. Account Suspension</h5>
+      <p>We reserve the right to suspend or terminate accounts that violate our terms, including abusive behavior, spam, or sharing prohibited content.</p>
+
+      <h5>5. Limitation of Liability</h5>
+      <p>Paradox is not responsible for any data loss, harm, or issues arising from user-uploaded content or system outages.</p>
+
+      <h5>6. Modifications</h5>
+      <p>We may revise these terms at any time. Continued use of Paradox means you accept the changes.</p>
+
+      <h5>7. Contact</h5>
+      <p>If you have any questions about these terms, please <a href="#contact">contact us</a>.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer mt-auto text-center">
+    <div class="container">
+      <p class="mb-1">© 2025 Paradox. All rights reserved.</p>
+      <a href="{% url 'about_us' %}" class="me-3">About Us</a>
+      <a href="{% url 'contact_us' %}">Contact Us</a> <br>
+      <a href="{% url 'sign_up' %}" class="me-3">ParaDox</a>
+    </div>
+  </footer>
+
+</body>
+
+</html>

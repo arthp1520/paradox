@@ -1,0 +1,33 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Update Document{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+  <h3 class="mb-4">Update Document</h3>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Title Field -->
+    <div class="mb-3">
+      <label for="title" class="form-label">Title</label>
+      <input type="text" class="form-control" id="title" name="title" value="{{ document.title }}" required>
+    </div>
+
+    <!-- Description Field -->
+    <div class="mb-3">
+      <label for="description" class="form-label">Description</label>
+      <textarea class="form-control" id="description" name="description" rows="3">{{ document.description }}</textarea>
+    </div>
+
+    <!-- File Upload Field -->
+    <div class="mb-3">
+      <label for="document" class="form-label">Choose New File (optional)</label>
+      <input type="file" class="form-control" id="document" name="document">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}
