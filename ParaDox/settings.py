@@ -2,21 +2,25 @@ from pathlib import Path
 import os
 import dj_database_url
 
+# BASE DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# Poppler path for PDF thumbnails
+POPPLER_PATH = '/usr/bin'
+
+# SECRET KEY
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-temp-key-for-dev')
 
-# Enable DEBUG mode (for development only!)
-DEBUG = True  # <--- Explicitly enabled for debugging on Render
+# DEBUG (set to False in Render)
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Hosts allowed (Render + localhost)
+# Allowed Hosts
 ALLOWED_HOSTS = ['localhost']
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# Application definition
+# Application Definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -29,7 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Handles static files on Render
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Serve static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,7 +64,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ParaDox.wsgi.application'
 
-# Database: Use PostgreSQL on Render, fallback to SQLite locally
+# DATABASE CONFIGURATION
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
@@ -73,7 +77,7 @@ else:
         }
     }
 
-# Password validation
+# PASSWORD VALIDATION
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -81,33 +85,45 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Localization
+# INTERNATIONALIZATION
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JS, Images)
+# STATIC FILES
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'apps' / 'dashboard' / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (uploads)
+# MEDIA FILES
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Email (SMTP with Gmail)
+# EMAIL CONFIGURATION (for Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER', 'agrearth22@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')  # Must be app password
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')  # Use Gmail App Password
 EMAIL_SUBJECT_PREFIX = '[ParaDox] '
 DEFAULT_FROM_EMAIL = 'ParaDox <agrearth22@gmail.com>'
 
-# MIME type fix for JS files on some CDNs or Render
+# Fix for JS MIME type issues
 if DEBUG:
     import mimetypes
     mimetypes.add_type("application/javascript", ".js", True)
+
+# LOGGING (shows errors in Render logs)
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG' if DEBUG else 'INFO',
+    },
+}

@@ -1,71 +1,28 @@
-# paradox
+# paradox/views.py
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
-from django.contrib.auth.models import User as DjangoUser  # Avoid confusion with custom User
 from functools import wraps
 import random
 import os
-from pdf2image import convert_from_path
-
-from django.shortcuts import redirect
-from .models import User, Post, Document, Comment
-from .helpers import is_email_verified, is_valid_mobile_number, is_valid_password, generate_username_suggestions
-from .models import User
-
-
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Document, Comment
-from .context_processors import current_user  # If you're using this manually
-# ================================
-# CUSTOM DECORATOR
-# ================================
-
-from django.core.serializers.json import DjangoJSONEncoder
 import json
-from django.http import JsonResponse
-from .models import Document, Comment
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from .models import Document, Comment 
-
-# In your context (for index or explore view)
-
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Document, Comment, User  # your custom User model
-
-
-from django.contrib.auth.tokens import default_token_generator
+from pdf2image import convert_from_path
+from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.contrib.auth import get_user_model
-from django.shortcuts import render, redirect
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib import messages
+from django.contrib.auth.tokens import default_token_generator
+from django.http import JsonResponse
+
+from .models import User, Post, Document, Comment
+from .helpers import is_email_verified, is_valid_mobile_number, is_valid_password, generate_username_suggestions
 
 
-def add_comment(request, doc_id):
-    if request.method == 'POST':
-        user = User.objects.get(id=request.session['user_id'])  # or however you're storing user
-        document = get_object_or_404(Document, id=doc_id)
-        text = request.POST.get('comment', '').strip()
-        if text:
-            comment = Comment.objects.create(user=user, document=document, text=text)
-            return JsonResponse({
-                'user': comment.user.name,
-                'text': comment.text,
-                'created_at': comment.created_at.strftime('%b %d %H:%M')
-            })
-    return JsonResponse({'error': 'Invalid request'}, status=400)
-
-
-
-
+# ============================
+# CUSTOM LOGIN DECORATOR
+# ============================
 def login_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
@@ -74,17 +31,10 @@ def login_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
-# ================================
+
+# ============================
 # AUTHENTICATION VIEWS
-# ================================
-
-
-
-
-
-
-
-
+# ============================
 
 def sign_in(request):
     if request.method == 'POST':
@@ -93,19 +43,25 @@ def sign_in(request):
 
         try:
             user = User.objects.get(email=email_)
+            print("✅ User found:", user.email)
         except User.DoesNotExist:
+            print("❌ User not found")
             return render(request, 'dashboard/sign_in.html', {'error': "User Does Not exist"})
 
         if not user.is_active:
+            print("❌ User not verified")
             return render(request, 'dashboard/sign_in.html', {'error': "Your Account is not verified"})
 
         if check_password(password, user.password):
+            print("✅ Password matched")
             request.session['user_id'] = user.id
             return redirect('index')
         else:
+            print("❌ Wrong password")
             return render(request, 'dashboard/sign_in.html', {'error': "Wrong Password Please Try Again"})
 
     return render(request, 'dashboard/sign_in.html')
+
 
 def sign_up(request):
     if request.method == 'POST':
@@ -122,23 +78,24 @@ def sign_up(request):
                 'name_suggestions': suggestions
             })
 
-        if not is_email_verified:
-            return render(request, 'dashboard/sign_up.html', {'error': "Provide Valid Mail id"})
+        if not is_email_verified(email_):
+            return render(request, 'dashboard/sign_up.html', {'error': "Invalid email address"})
 
         if User.objects.filter(email=email_).exists():
-            return render(request, 'dashboard/sign_up.html', {'error': "Email Already exist please Login"})
+            return render(request, 'dashboard/sign_up.html', {'error': "Email already exists"})
 
         if not is_valid_mobile_number(mobile_):
-            return render(request, 'dashboard/sign_up.html', {'error': "please provide +91 "})
+            return render(request, 'dashboard/sign_up.html', {'error': "Enter valid +91 number"})
 
         if User.objects.filter(mobile=mobile_).exists():
-            return render(request, 'dashboard/sign_up.html', {'error': "Mobile Already Exist"})
+            return render(request, 'dashboard/sign_up.html', {'error': "Mobile already registered"})
 
         if password_ != confirm_password_:
-            return render(request, 'dashboard/sign_up.html', {'error': "Password Does Not Match"})
+            return render(request, 'dashboard/sign_up.html', {'error': "Passwords do not match"})
 
-        if not is_valid_password(password_)[0]:
-            return redirect('sign_up')
+        valid, error = is_valid_password(password_)
+        if not valid:
+            return render(request, 'dashboard/sign_up.html', {'error': error})
 
         user = User.objects.create(
             name=name_,
@@ -146,53 +103,53 @@ def sign_up(request):
             mobile=mobile_,
             password=make_password(password_),
         )
+
         otp_ = random.randint(111111, 999999)
-        subject = "Email Confirmation mail | ParaDox"
-        message = f"Welcome to ParaDox, {name_}! Your OTP is: {otp_}. Keep learning and sharing your Dox 👍"
-        send_mail(subject, message, settings.EMAIL_HOST_USER, [email_])
         user.otp = otp_
         user.save()
+
+        subject = "Email Confirmation | ParaDox"
+        message = f"Hi {name_}, your OTP is {otp_}. Welcome to ParaDox!"
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [email_])
 
         return render(request, 'dashboard/email_verify.html', {'email': email_})
 
     return render(request, 'dashboard/sign_up.html')
 
+
 def email_verify(request):
-    
     if request.method == 'POST':
         email_ = request.POST['email']
         otp_ = request.POST['otp']
 
-        if not User.objects.filter(email=email_).exists():
-            return render(request, 'dashboard/email_verify.html', {'email': email_})
+        try:
+            user = User.objects.get(email=email_)
+        except User.DoesNotExist:
+            return render(request, 'dashboard/email_verify.html', {'email': email_, 'error': 'Email not found'})
 
-        user = User.objects.get(email=email_)
-
-        if int(otp_) == int(user.otp):
+        if str(user.otp) == str(otp_):
             user.is_active = True
             user.save()
             return redirect('sign_in')
 
         messages.error(request, "Invalid OTP")
-        return render(request, 'dashboard/sign_in.html', {'email': email_})
+        return render(request, 'dashboard/email_verify.html', {'email': email_})
 
     return render(request, 'dashboard/email_verify.html')
+
 
 def forgot_password(request):
     if request.method == 'POST':
         email = request.POST['email']
-        User = get_user_model()
+
         try:
             user = User.objects.get(email=email)
-            
-            # ✅ Here's where you generate the UID + Token
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             reset_link = request.build_absolute_uri(f'/reset_password/{uid}/{token}/')
 
-            # ✅ Send the email
             subject = 'Reset Your Password - ParaDox'
-            message = f'Click the link below to reset your password:\n{reset_link}'
+            message = f'Reset your password here:\n{reset_link}'
             send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
 
             return render(request, 'dashboard/forgot_password.html', {
@@ -205,66 +162,50 @@ def forgot_password(request):
     return render(request, 'dashboard/forgot_password.html')
 
 
-
-
 def reset_password(request, uidb64, token):
-    User = get_user_model()
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (User.DoesNotExist, ValueError, TypeError):
         user = None
 
-    if user is not None and default_token_generator.check_token(user, token):
+    if user and default_token_generator.check_token(user, token):
         if request.method == 'POST':
             password1 = request.POST.get('new_password')
             password2 = request.POST.get('confirm_password')
-            if password1 and password1 == password2:
-                user.set_password(password1)
+            if password1 == password2:
+                user.password = make_password(password1)
                 user.save()
-                messages.success(request, 'Password reset successful! Please log in.')
-                return redirect('signin')  # Adjust the name to your login view
-            else:
-                messages.error(request, 'Passwords do not match')
+                messages.success(request, 'Password reset successful!')
+                return redirect('sign_in')
+            messages.error(request, 'Passwords do not match')
         return render(request, 'dashboard/reset_password.html')
-    else:
-        return render(request, 'dashboard/reset_invalid.html')  # Optional template for invalid/expired links
 
+    return render(request, 'dashboard/reset_invalid.html')
 
-
- 
-def analytics(request):
-    return render(request,'dashboard/analytics.html')
 
 def logout(request):
-    user = User.objects.get(id=request.session['user_id']) 
-    messages.success(request, f"{user.name}, you have successfully logged out from ParaDox. Keep Learning! ✌️🤞", extra_tags='logout')
+    user = User.objects.get(id=request.session['user_id'])
     del request.session['user_id']
+    messages.success(request, f"{user.name}, you have logged out successfully.", extra_tags='logout')
     return redirect('sign_in')
 
-# views.py
-
-
-
-
-
-# ================================
+# ============================
 # DASHBOARD VIEWS
-# ================================
+# ============================
 
 @login_required
-def index(request): 
+def index(request):
     user_id = request.session.get('user_id')
     current_user = User.objects.get(id=user_id)
 
-    query = request.GET.get('query')
+    query = request.GET.get('query', '')
     users = list(User.objects.filter(name__icontains=query).exclude(id=user_id)) if query else list(User.objects.exclude(id=user_id))
     documents = list(Document.objects.all())
 
     random.shuffle(users)
     random.shuffle(documents)
 
-    # ✅ Prepare comment data JSON for each document
     for doc in documents:
         doc.comment_data = json.dumps([
             {
@@ -275,49 +216,14 @@ def index(request):
             for c in doc.comments.all()
         ], cls=DjangoJSONEncoder)
 
-    # ✅ Then render template
     return render(request, 'dashboard/index.html', {
         'users': users[:10],
         'documents': documents[:10],
         'query': query,
         'current_user': current_user
     })
-@login_required
-def explore_profile(request):
-    user_id = request.session.get('user_id')
-    current_user = User.objects.get(id=user_id)
-
-    users = list(User.objects.exclude(id=user_id))
-    documents = list(Document.objects.all())
-
-    random.shuffle(users)
-    random.shuffle(documents)
-
-    return render(request, 'dashboard/explore_profile.html', {
-        'users': users,
-        'documents': documents,
-        'current_user': current_user
-    })
 
 
-@login_required
-def explore_docs(request):
-    user_id = request.session.get('user_id')
-    current_user = User.objects.get(id=user_id)
-
-    users = list(User.objects.exclude(id=user_id))
-    documents = list(Document.objects.all())
-
-    random.shuffle(users)
-    random.shuffle(documents)
-
-    return render(request, 'dashboard/explore_docs.html', {
-        'users': users,
-        'documents': documents,
-        'current_user': current_user
-    })
-    
-    
 @login_required
 def profile(request):
     user = User.objects.get(id=request.session['user_id'])
@@ -332,7 +238,7 @@ def profile(request):
         if uploaded_file.name.endswith('.pdf'):
             try:
                 pdf_path = os.path.join(settings.MEDIA_ROOT, doc.file.name)
-                images = convert_from_path(pdf_path, first_page=1, last_page=1, poppler_path=r"C:\\Users\\agrea\\Downloads\\Release-24.08.0-0\\poppler-24.08.0\\Library\\bin")
+                images = convert_from_path(pdf_path, first_page=1, last_page=1, poppler_path=settings.POPPLER_PATH)
                 thumbnail_path = f"thumbnails/{doc.id}_thumb.jpg"
                 full_path = os.path.join(settings.MEDIA_ROOT, thumbnail_path)
                 os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -352,10 +258,47 @@ def profile(request):
         'following': user.following.all()
     })
 
+
+@login_required
+def explore_docs(request):
+    user_id = request.session.get('user_id')
+    current_user = User.objects.get(id=user_id)
+
+    users = list(User.objects.exclude(id=user_id))
+    documents = list(Document.objects.all())
+
+    random.shuffle(users)
+    random.shuffle(documents)
+
+    return render(request, 'dashboard/explore_docs.html', {
+        'users': users,
+        'documents': documents,
+        'current_user': current_user
+    })
+
+
+@login_required
+def explore_profile(request):
+    user_id = request.session.get('user_id')
+    current_user = User.objects.get(id=user_id)
+
+    users = list(User.objects.exclude(id=user_id))
+    documents = list(Document.objects.all())
+
+    random.shuffle(users)
+    random.shuffle(documents)
+
+    return render(request, 'dashboard/explore_profile.html', {
+        'users': users,
+        'documents': documents,
+        'current_user': current_user
+    })
+
+
 @login_required
 def public_profile(request, user_id):
     user_profile = User.objects.get(id=user_id)
-    current_user = User.objects.get(id=request.session.get('user_id'))
+    current_user = User.objects.get(id=request.session['user_id'])
     documents = Document.objects.filter(user=user_profile).order_by('-uploaded_at')
     return render(request, 'dashboard/public_profile.html', {
         'user_profile': user_profile,
@@ -366,6 +309,7 @@ def public_profile(request, user_id):
         'followers': user_profile.followers.all(),
         'following': user_profile.following.all()
     })
+
 
 @login_required
 def toggle_follow(request, user_id):
@@ -380,6 +324,7 @@ def toggle_follow(request, user_id):
                 current_user.following.add(target_user)
 
         return redirect('public_profile', user_id=user_id)
+
 
 @login_required
 def edit_profile(request):
@@ -398,6 +343,7 @@ def edit_profile(request):
 
     return render(request, 'dashboard/edit_profile.html', {'user': user})
 
+
 @login_required
 def update_document(request, doc_id):
     document = Document.objects.get(id=doc_id)
@@ -412,6 +358,7 @@ def update_document(request, doc_id):
 
     return render(request, 'dashboard/update_document.html', {'document': document})
 
+
 @login_required
 def delete_document(request, doc_id):
     user_id = request.session.get('user_id')
@@ -425,10 +372,32 @@ def delete_document(request, doc_id):
 
     return redirect('profile')
 
+
+@login_required
+def add_comment(request, doc_id):
+    if request.method == 'POST':
+        user = User.objects.get(id=request.session['user_id'])
+        document = get_object_or_404(Document, id=doc_id)
+        text = request.POST.get('comment', '').strip()
+        if text:
+            comment = Comment.objects.create(user=user, document=document, text=text)
+            return JsonResponse({
+                'user': comment.user.name,
+                'text': comment.text,
+                'created_at': comment.created_at.strftime('%b %d %H:%M')
+            })
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+# ============================
+# POST MANAGEMENT
+# ============================
+
 @login_required
 def show(request):
     posts = Post.objects.all()
     return render(request, 'dashboard/show.html', {'posts': posts})
+
 
 @login_required
 def insert(request):
@@ -441,11 +410,17 @@ def insert(request):
         return redirect('show')
     return render(request, 'dashboard/insert.html')
 
+
 @login_required
 def delete_post(request, post_id):
     post = Post.objects.get(id=post_id)
     post.delete()
     return redirect('show')
+
+
+# ============================
+# SEARCH & ANALYTICS
+# ============================
 
 @login_required
 def search(request):
@@ -463,11 +438,24 @@ def search(request):
         'current_user': current_user,
     })
 
+
+@login_required
+def analytics(request):
+    return render(request, 'dashboard/analytics.html')
+
+
+# ============================
+# STATIC PAGES
+# ============================
+
 def terms(request):
     return render(request, 'dashboard/terms.html')
+
 
 def about_us(request):
     return render(request, 'dashboard/about_us.html')
 
+
 def contact_us(request):
     return render(request, 'dashboard/contact_us.html')
+
