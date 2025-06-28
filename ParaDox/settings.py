@@ -112,7 +112,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER', 'agrearth22@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('rfaiywzmymlnsvaw')  # Use Gmail App Password
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD') 
 EMAIL_SUBJECT_PREFIX = '[ParaDox] '
 DEFAULT_FROM_EMAIL = 'ParaDox <agrearth22@gmail.com>'
 
