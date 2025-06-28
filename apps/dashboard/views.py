@@ -38,6 +38,17 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Document, Comment, User  # your custom User model
 
+
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth import get_user_model
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+
+
 def add_comment(request, doc_id):
     if request.method == 'POST':
         user = User.objects.get(id=request.session['user_id'])  # or however you're storing user
@@ -170,42 +181,55 @@ def email_verify(request):
 def forgot_password(request):
     if request.method == 'POST':
         email = request.POST['email']
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+            
+            # ✅ Here's where you generate the UID + Token
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            reset_link = request.build_absolute_uri(f'/reset_password/{uid}/{token}/')
 
-        # Send a simple reset link
-        subject = 'Reset Your Password'
-        # Correct URL path
-        message = 'Click here to reset your password: http://127.0.0.1:8000/reset_password/'
-        from_email = settings.EMAIL_HOST_USER
-        recipient_list = [email]
+            # ✅ Send the email
+            subject = 'Reset Your Password - ParaDox'
+            message = f'Click the link below to reset your password:\n{reset_link}'
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
 
-        send_mail(subject, message, from_email, recipient_list)
+            return render(request, 'dashboard/forgot_password.html', {
+                'message': 'We sent a reset link to your email!'
+            })
 
-        return render(request, 'dashboard/forgot_password.html', {
-            'message': 'We sent a reset link to your email!'
-        })
+        except User.DoesNotExist:
+            messages.error(request, 'Email not found!')
 
     return render(request, 'dashboard/forgot_password.html')
 
 
-def reset_password(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')  # optional, see note below
-        new_password = request.POST.get('new_password')
-        confirm_password = request.POST.get('confirm_password')
 
-        if new_password == confirm_password:
-            try:
-                user_obj = User.objects.get(email=email)
-                user_obj.password = make_password(new_password)
-                user_obj.save()
-                messages.success(request, "Password reset successful.")
-                return redirect('sign_in')
-            except User.DoesNotExist:
-                messages.error(request, "No user found with this email.")
-        else:
-            messages.error(request, "Passwords do not match.")
 
-    return render(request, 'dashboard/reset_password.html')
+def reset_password(request, uidb64, token):
+    User = get_user_model()
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (User.DoesNotExist, ValueError, TypeError):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            password1 = request.POST.get('new_password')
+            password2 = request.POST.get('confirm_password')
+            if password1 and password1 == password2:
+                user.set_password(password1)
+                user.save()
+                messages.success(request, 'Password reset successful! Please log in.')
+                return redirect('signin')  # Adjust the name to your login view
+            else:
+                messages.error(request, 'Passwords do not match')
+        return render(request, 'dashboard/reset_password.html')
+    else:
+        return render(request, 'dashboard/reset_invalid.html')  # Optional template for invalid/expired links
+
 
 
  

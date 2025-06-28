@@ -1,16 +1,14 @@
 // Toggle visibility for password fields
-function togglePassword(fieldId) {
+function togglePassword(toggleIcon, fieldId) {
   const input = document.getElementById(fieldId);
-  const icon = input.nextElementSibling.querySelector('i');
+  const icon = toggleIcon.querySelector('i');
 
   if (input.type === "password") {
     input.type = "text";
-    icon.classList.remove('fa-eye');
-    icon.classList.add('fa-eye-slash');
+    icon.classList.replace('fa-eye', 'fa-eye-slash');
   } else {
     input.type = "password";
-    icon.classList.remove('fa-eye-slash');
-    icon.classList.add('fa-eye');
+    icon.classList.replace('fa-eye-slash', 'fa-eye');
   }
 }
 

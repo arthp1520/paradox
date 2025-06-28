@@ -33,3 +33,17 @@ function handleForgotSubmit(event) {
   }
   return true;
 }
+
+function handleForgotSubmit(e) {
+  const emailInput = document.getElementById('email');
+  if (!emailInput.checkValidity()) {
+    emailInput.classList.add("is-invalid");
+    return false;
+  }
+
+  const button = document.querySelector("button[type='submit']");
+  button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...`;
+  button.disabled = true;
+
+  return true;
+}
