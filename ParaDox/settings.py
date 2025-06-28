@@ -5,22 +5,24 @@ import dj_database_url
 # BASE DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ✅ Poppler path for PDF2Image (used in production like Render only if installed)
+# Poppler path for PDF thumbnails
 POPPLER_PATH = '/usr/bin'
 
 # SECRET KEY
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-temp-key-for-dev')
 
-# ✅ DEBUG Mode
+# DEBUG (set to False in Render)
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# ✅ Allowed Hosts
-ALLOWED_HOSTS = ['paradox-5hjn.onrender.com']
+
+
+# Allowed Hosts
+ALLOWED_HOSTS = ['*']
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# ✅ Installed Apps
+# Application Definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -31,10 +33,9 @@ INSTALLED_APPS = [
     'apps.dashboard',
 ]
 
-# ✅ Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Static file handler
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Serve static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -43,7 +44,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ✅ URL & Templates
 ROOT_URLCONF = 'ParaDox.urls'
 
 TEMPLATES = [
@@ -66,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ParaDox.wsgi.application'
 
-# ✅ Database Configuration
+# DATABASE CONFIGURATION
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
@@ -79,7 +79,7 @@ else:
         }
     }
 
-# ✅ Password Validators
+# PASSWORD VALIDATION
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -87,19 +87,19 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ✅ Internationalization
+# INTERNATIONALIZATION
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# ✅ Static Files
+# STATIC FILES
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'apps' / 'dashboard' / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# ✅ Media Files
+# MEDIA FILES
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
