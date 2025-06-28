@@ -13,7 +13,7 @@ urlpatterns = [
     # Dashboard
     path('index/', views.index, name='index'),
     path('profile/', views.profile, name='profile'),
-    path('edit-profile/', views.edit_profile, name='edit_profile'),
+    path('edit_profile/', views.edit_profile, name='edit_profile'),
 
     # Document
     path('update-document/<int:doc_id>/', views.update_document, name='update_document'),
