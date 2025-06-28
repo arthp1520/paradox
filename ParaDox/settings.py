@@ -13,6 +13,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-temp-key-for-dev')
 
 # DEBUG (set to False in Render)
 # DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = True
+if DEBUG:
+    import mimetypes
+    mimetypes.add_type("application/javascript", ".js", True)
 
 
 # Allowed Hosts
@@ -112,10 +116,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')  # Use Gmail App Password
 EMAIL_SUBJECT_PREFIX = '[ParaDox] '
 DEFAULT_FROM_EMAIL = 'ParaDox <agrearth22@gmail.com>'
 
-# Fix for JS MIME type issues
-if DEBUG:
-    import mimetypes
-    mimetypes.add_type("application/javascript", ".js", True)
+
 
 # LOGGING (shows errors in Render logs)
 LOGGING = {
